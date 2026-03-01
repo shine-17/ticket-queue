@@ -4,21 +4,28 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.List;
 
-
+@Component
+@Slf4j
 public class JwtProvider {
+
     private final SecretKey key;
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
 
-    public JwtProvider(String secret, long accessTokenExpiration, long refreshTokenExpiration) {
+    public JwtProvider(@Value("${spring.jwt.secret}") String secret,
+                       @Value("${spring.jwt.accessExpiration}") long accessTokenExpiration,
+                       @Value("${spring.jwt.refreshExpiration}") long refreshTokenExpiration) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
@@ -26,8 +33,8 @@ public class JwtProvider {
 
     public JwtToken generateToken(String userId, List<String> roles) {
         long now = System.currentTimeMillis();
-
         Date date = new Date(now);
+//        String subject = JsonHelper.toJson(payload);
 
         String accessToken = Jwts.builder()
                 .subject(userId)
@@ -52,11 +59,11 @@ public class JwtProvider {
             Jwts.parser()
                     .verifyWith(key)
                     .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+                    .parseSignedClaims(token);
 
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            log.error("Invalid Jwt");
             return false;
         }
     }
