@@ -32,7 +32,7 @@ end
 if activeCount < capacity then
     -- active queue 등록
     redis.call("ZADD", KEYS[1], currentTimeStamp, userId)
-    return {"ACTIVE"}
+    return {"ADD_ACTIVE"}
 else
     -- waiting queue 등록
     redis.call("ZADD", KEYS[2], currentTimeStamp, userId)
@@ -40,5 +40,5 @@ else
     -- 대기 순서
     local rank = redis.call("ZRANK", KEYS[2], userId)
 
-    return {"WAITING", rank}
+    return {"ADD_WAITING", rank}
 end
