@@ -23,11 +23,16 @@ public class RedisWaitingQueue implements WaitingQueuePort {
     @Value("${ticket.booking.capacity}")
     private int CAPACITY;
 
+    @Value("${active.user.ttl}")
+    private int ACTIVE_USER_TTL;
+
+
 
     @Override
     public boolean isActive(String userId, long showId) {
         String key = RedisKeys.ACTIVE_USER.generateKey(showId);
-        Long result = redisTemplate.opsForZSet().rank(key, userId);
+//        Long result = redisTemplate.opsForZSet().rank(key, userId);
+        Double result = redisTemplate.opsForZSet().score(key, userId);
 
         return result != null;
     }
@@ -35,7 +40,8 @@ public class RedisWaitingQueue implements WaitingQueuePort {
     @Override
     public boolean isWaiting(String userId, long showId) {
         String key = RedisKeys.WAITING_USER.generateKey(showId);
-        Long result = redisTemplate.opsForZSet().rank(key, userId);
+//        Long result = redisTemplate.opsForZSet().rank(key, userId);
+        Double result = redisTemplate.opsForZSet().score(key, userId);
 
         return result != null;
     }
@@ -65,13 +71,18 @@ public class RedisWaitingQueue implements WaitingQueuePort {
         // key[1]: active key, key[2]: waiting key
         List<String> keys = getKeys(showId);
 
+        LocalDateTime now = LocalDateTime.now();
+        long currentTime = Timestamp.valueOf(now).getTime();
+        long expireTime = Timestamp.valueOf(now.plusMinutes(ACTIVE_USER_TTL)).getTime();
+
         // ARGV: userId, seatCount, ttl
         String result = redisTemplate.execute(
                 script,
                 keys,
                 userId,
                 CAPACITY,
-                Timestamp.valueOf(LocalDateTime.now()).getTime()
+                currentTime,
+                expireTime
         );
 
 
@@ -90,6 +101,9 @@ public class RedisWaitingQueue implements WaitingQueuePort {
         else if (result.equals("ADD_WAITING")) {
 
         }
+        else if (result.equals("DUPLICATION")) {
+
+        }
 
         // result == 1이면 성공
     }
@@ -105,7 +119,8 @@ public class RedisWaitingQueue implements WaitingQueuePort {
         // active key, waiting key
         return List.of(
                 RedisKeys.ACTIVE_USER.generateKey(showId),
-                RedisKeys.WAITING_USER.generateKey(showId)
+                RedisKeys.WAITING_USER.generateKey(showId),
+                RedisKeys.ADMISSION_POINT.generateKey(showId)
         );
     }
 }
