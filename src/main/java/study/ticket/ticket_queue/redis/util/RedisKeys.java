@@ -1,10 +1,9 @@
 package study.ticket.ticket_queue.redis.util;
 
 public enum RedisKeys {
-    ACTIVE_USER("active:%s"),   // active:{showId}
-    WAITING_USER("waiting:%s"), // waiting:{showId}
-    ACTIVE_SESSION("active:session:%s:%s"),
-    ADMISSION_POINT("admission:%s"); // admission:{showId}
+    ACTIVE_USER("active:%s"),               // active:{showId}
+    WAITING_USER("waiting:%s"),             // waiting:{showId}
+    ADMISSION_POINT("admission:%s");        // admission:{showId}
 
     private final String format;
 
@@ -12,7 +11,7 @@ public enum RedisKeys {
         this.format = format;
     }
 
-    public String generateKey(Long showId) {
-        return format.formatted(showId);
+    public String generateKey(Object... args) {
+        return format.formatted(args);
     }
 }
