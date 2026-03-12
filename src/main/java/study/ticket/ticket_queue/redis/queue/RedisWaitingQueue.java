@@ -47,7 +47,7 @@ public class RedisWaitingQueue implements WaitingQueuePort {
     }
 
     @Override
-    public void add(String userId, long showId) {
+    public void add(String userId, long showId, long waitingScore) {
         long time = Timestamp.valueOf(LocalDateTime.now()).getTime();
         String key = RedisKeys.WAITING_USER.generateKey(showId);
 
@@ -59,9 +59,9 @@ public class RedisWaitingQueue implements WaitingQueuePort {
     }
 
     @Override
-    public long findRank(String loginId, long showId) {
+    public long findRank(String userId, long showId) {
         // 인덱스 0부터 시작
-        return redisTemplate.opsForZSet().rank(RedisKeys.WAITING_USER.generateKey(showId), loginId) + 1;
+        return redisTemplate.opsForZSet().rank(RedisKeys.WAITING_USER.generateKey(showId), userId) + 1;
     }
 
     private void issueToken(String userId, long showId) {
@@ -69,7 +69,7 @@ public class RedisWaitingQueue implements WaitingQueuePort {
         RedisScript<String> script = getLuaScript("script/redis/issue_token.lua", String.class);
 
         // key[1]: active key, key[2]: waiting key
-        List<String> keys = getKeys(showId);
+        List<String> keys = getKeys(userId, showId);
 
         LocalDateTime now = LocalDateTime.now();
         long currentTime = Timestamp.valueOf(now).getTime();
@@ -115,11 +115,12 @@ public class RedisWaitingQueue implements WaitingQueuePort {
         return script;
     }
 
-    private List<String> getKeys(long showId) {
+    private List<String> getKeys(String userId, long showId) {
         // active key, waiting key
         return List.of(
                 RedisKeys.ACTIVE_USER.generateKey(showId),
                 RedisKeys.WAITING_USER.generateKey(showId),
+//                RedisKeys.ACTIVE_SESSION.generateKey(showId, userId),
                 RedisKeys.ADMISSION_POINT.generateKey(showId)
         );
     }
