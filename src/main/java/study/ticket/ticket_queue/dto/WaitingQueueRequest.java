@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class QueueRequest {
+public class WaitingQueueRequest {
     private String userId;
     private long showId;
 }
