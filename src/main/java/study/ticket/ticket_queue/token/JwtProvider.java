@@ -10,6 +10,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
+import study.ticket.ticket_queue.domain.TokenPayload;
+import study.ticket.ticket_queue.util.JsonHelper;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -21,37 +23,35 @@ public class JwtProvider {
 
     private final SecretKey key;
     private final long accessTokenExpiration;
-    private final long refreshTokenExpiration;
 
     public JwtProvider(@Value("${spring.jwt.secret}") String secret,
-                       @Value("${spring.jwt.accessExpiration}") long accessTokenExpiration,
-                       @Value("${spring.jwt.refreshExpiration}") long refreshTokenExpiration) {
+                       @Value("${ticket.booking.token.active}") long activeToken,
+                       @Value("${ticket.booking.token.waiting}") long waitingToken) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
-        this.accessTokenExpiration = accessTokenExpiration;
-        this.refreshTokenExpiration = refreshTokenExpiration;
+        this.accessTokenExpiration = activeToken;
     }
 
-    public JwtToken generateToken(String userId, List<String> roles) {
+    public String generateToken(TokenPayload payload) {
         long now = System.currentTimeMillis();
         Date date = new Date(now);
 //        String subject = JsonHelper.toJson(payload);
+        String data = JsonHelper.toJson(payload);
 
-        String accessToken = Jwts.builder()
-                .subject(userId)
-                .claim("roles", roles)
+        return Jwts.builder()
+                .subject(data)
                 .issuedAt(date)
                 .expiration(new Date(now + accessTokenExpiration))
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
 
-        String refreshToken = Jwts.builder()
-                .subject(userId)
-                .issuedAt(date)
-                .expiration(new Date(now + refreshTokenExpiration))
-                .signWith(key, Jwts.SIG.HS256)
-                .compact();
+//        String refreshToken = Jwts.builder()
+//                .subject(data)
+//                .issuedAt(date)
+//                .expiration(new Date(now + refreshTokenExpiration))
+//                .signWith(key, Jwts.SIG.HS256)
+//                .compact();
 
-        return new JwtToken(accessToken, refreshToken);
+//        return new JwtToken(accessToken, refreshToken);
     }
 
     public boolean validateToken(String token) {
