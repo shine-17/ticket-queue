@@ -22,13 +22,15 @@ import java.util.List;
 public class JwtProvider {
 
     private final SecretKey key;
-    private final long accessTokenExpiration;
+    private final long activeTokenExpiration;
+    private final long waitingTokenExpiration;
 
     public JwtProvider(@Value("${spring.jwt.secret}") String secret,
-                       @Value("${ticket.booking.token.active}") long activeToken,
-                       @Value("${ticket.booking.token.waiting}") long waitingToken) {
+                       @Value("${ticket.booking.token.activeExpiration}") long activeTokenExpiration,
+                       @Value("${ticket.booking.token.waitingExpiration}") long waitingTokenExpiration) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
-        this.accessTokenExpiration = activeToken;
+        this.activeTokenExpiration = activeTokenExpiration;
+        this.waitingTokenExpiration = waitingTokenExpiration;
     }
 
     public String generateToken(TokenPayload payload) {
@@ -40,7 +42,7 @@ public class JwtProvider {
         return Jwts.builder()
                 .subject(data)
                 .issuedAt(date)
-                .expiration(new Date(now + accessTokenExpiration))
+                .expiration(new Date(now + activeTokenExpiration))
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
 

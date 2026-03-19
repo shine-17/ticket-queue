@@ -8,7 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import study.ticket.ticket_queue.domain.WaitingQueueTokenPayload;
+import study.ticket.ticket_queue.domain.TokenPayload;
+import study.ticket.ticket_queue.domain.WaitingQueueStatus;
 import study.ticket.ticket_queue.util.JsonHelper;
 
 import javax.crypto.SecretKey;
@@ -26,21 +27,26 @@ public class JwtTokenTest {
 
     @Value("${spring.jwt.secret}")
     private String key;
-    @Value("${spring.jwt.accessExpiration}")
-    private long ACCESS_TOKEN_EXPIRATION;
-    @Value("${spring.jwt.refreshExpiration}")
-    private long REFRESH_TOKEN_EXPIRATION;
+    @Value("${ticket.booking.token.activeExpiration}")
+    private long activeTokenExpiration;
+    @Value("${ticket.booking.token.waitingExpiration}")
+    private long waitingTokenExpiration;
 
     private final String userId = "test1";
     private final long showId = 1L;
 
     private JwtProvider jwtProvider;
-    private WaitingQueueTokenPayload payload;
+    private TokenPayload payload;
 
     @BeforeAll
     void setUp() {
 //        payload = new WaitingQueueTokenPayload(userId);
-        jwtProvider = new JwtProvider(key, ACCESS_TOKEN_EXPIRATION, REFRESH_TOKEN_EXPIRATION);
+        jwtProvider = new JwtProvider(key, activeTokenExpiration, waitingTokenExpiration);
+        payload = TokenPayload.builder()
+                .userId(userId)
+//                .totalWaitingCount(100)
+                .status(WaitingQueueStatus.WAITING)
+                .build();
     }
 
     @Test
@@ -56,26 +62,18 @@ public class JwtTokenTest {
     @Test
     @DisplayName("Jwt 생성")
     void generateJwtToken() {
-        JwtToken jwtToken = jwtProvider.generateToken(userId, List.of());
-
+//        JwtToken jwtToken = jwtProvider.generateToken(payload, List.of());
+        String jwtToken = jwtProvider.generateToken(payload);
         assertThat(jwtToken).isNotNull();
     }
 
     @Test
     @DisplayName("AccessToken 검증 성공")
     void succeedVerifyAccessToken() {
-        JwtToken jwtToken = jwtProvider.generateToken(userId, List.of());
+//        JwtToken jwtToken = jwtProvider.generateToken(payload, List.of());
+        String jwtToken = jwtProvider.generateToken(payload);
 
-        boolean result = jwtProvider.validateToken(jwtToken.accessToken());
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    @DisplayName("RefreshToken 검증 성공")
-    void succeedVerifyRefreshToken() {
-        JwtToken jwtToken = jwtProvider.generateToken(userId, List.of());
-
-        boolean result = jwtProvider.validateToken(jwtToken.refreshToken());
+        boolean result = jwtProvider.validateToken(jwtToken);
         assertThat(result).isTrue();
     }
 
@@ -84,14 +82,12 @@ public class JwtTokenTest {
     void failedVerifyToSecretKey() {
         String key = this.key + " ";
 
-        JwtProvider jwtProvider = new JwtProvider(key, ACCESS_TOKEN_EXPIRATION, REFRESH_TOKEN_EXPIRATION);
-        JwtToken jwtToken = jwtProvider.generateToken(userId, List.of());
+        JwtProvider jwtProvider = new JwtProvider(key, activeTokenExpiration, waitingTokenExpiration);
+//        JwtToken jwtToken = jwtProvider.generateToken(payload, List.of());
+        String jwtToken = jwtProvider.generateToken(payload);
 
-        boolean accessResult = jwtProvider.validateToken(jwtToken.accessToken());
-        boolean refreshResult = jwtProvider.validateToken(jwtToken.refreshToken());
-
+        boolean accessResult = jwtProvider.validateToken(jwtToken);
         assertThat(accessResult).isTrue();
-        assertThat(refreshResult).isTrue();
     }
 
     @Test
