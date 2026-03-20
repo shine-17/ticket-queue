@@ -7,6 +7,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
+import study.ticket.ticket_queue.domain.WaitingQueueResult;
+import study.ticket.ticket_queue.domain.WaitingQueueStatus;
 import study.ticket.ticket_queue.port.WaitingQueuePort;
 import study.ticket.ticket_queue.redis.util.RedisKeys;
 
@@ -47,21 +49,53 @@ public class RedisWaitingQueue implements WaitingQueuePort {
     }
 
     @Override
-    public void add(String userId, long showId, long waitingScore) {
-        long time = Timestamp.valueOf(LocalDateTime.now()).getTime();
-        String key = RedisKeys.WAITING_USER.generateKey(showId);
+    public WaitingQueueResult enqueue(String userId, long showId) {
 
-        Boolean result = redisTemplate.opsForZSet().add(key, userId, time);
+        // waiting queue score에 sequence 넣기
 
-        if (result == null || !result) {
-            throw new IllegalStateException("Redis operations failed to add user \"" + userId + "\" to waiting queue");
+        // Lua Script
+        RedisScript<List> script = getLuaScript("script/redis/enqueue.lua", List.class);
+
+        // key[1]: active key, key[2]: waiting key
+        List<String> keys = getKeys(userId, showId);
+
+        LocalDateTime now = LocalDateTime.now();
+        long currentTime = Timestamp.valueOf(now).getTime();
+        long expireTime = Timestamp.valueOf(now.plusMinutes(ACTIVE_USER_TTL)).getTime();
+
+        // ARGV: userId, seatCount, ttl
+        List<Object> result = redisTemplate.execute(
+                script,
+                keys,
+                userId,
+//                String.valueOf(CAPACITY),
+//                String.valueOf(currentTime),
+//                String.valueOf(expireTime)
+                CAPACITY,
+                currentTime,
+                expireTime
+        );
+
+
+        if (result == null) {
+            throw new IllegalStateException("Redis operations failed to add user \"" + userId + "\" to queue");
         }
+
+        String status = (String) result.get(0);
+        long position = (long) result.get(1);
+
+        return WaitingQueueResult.builder()
+                .status(WaitingQueueStatus.valueOf(status))
+                .waitingScore(position)
+                .build();
     }
 
     @Override
     public long findRank(String userId, long showId) {
         // 인덱스 0부터 시작
         return redisTemplate.opsForZSet().rank(RedisKeys.WAITING_USER.generateKey(showId), userId) + 1;
+//        Object obj = redisTemplate.opsForValue().get(RedisKeys.ADMISSION_POINT.generateKey(showId));
+//        if
     }
 
     private void issueToken(String userId, long showId) {

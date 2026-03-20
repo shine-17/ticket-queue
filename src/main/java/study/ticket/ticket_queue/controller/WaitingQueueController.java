@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import study.ticket.ticket_queue.domain.WaitingQueueStatusInfo;
-import study.ticket.ticket_queue.domain.TokenPayload;
 import study.ticket.ticket_queue.domain.WaitingQueueStatus;
 import study.ticket.ticket_queue.dto.WaitingQueueRequest;
 import study.ticket.ticket_queue.dto.WaitingQueueResponse;
@@ -19,11 +18,8 @@ public class WaitingQueueController {
     private final WaitingQueueService waitingQueueService;
 
     @PostMapping("/api/ticket/enter")
-    public WaitingQueueResponse enterQueue(WaitingQueueRequest request) {
-
-        WaitingQueueStatusInfo waitingQueueStatusInfo = waitingQueueService.enterQueue(request);
-
-        return null;
+    public WaitingQueueStatusInfo enterQueue(WaitingQueueRequest request) {
+        return waitingQueueService.enter(request);
     }
 
     // polling
@@ -31,11 +27,9 @@ public class WaitingQueueController {
     public WaitingQueueResponse waiting(WaitingQueueRequest request, HttpServletResponse response) {
 
         // jwt의 payload 데이터 변환
-        long waitingScore = 0;
+        WaitingQueueStatusInfo waitingQueueStatusInfo = waitingQueueService.enter(request);
 
-        TokenPayload responsePayload = waitingQueueService.add(request.getUserId(), request.getShowId(), waitingScore);
-
-        if (responsePayload.getStatus().compareTo(WaitingQueueStatus.ACTIVE) == 0) {
+        if (waitingQueueStatusInfo.getStatus().compareTo(WaitingQueueStatus.ACTIVE) == 0) {
             // access token
 //            Cookie cookie = new Cookie("accessToken", payload.getToken().accessToken());
 //            response.addCookie(cookie);

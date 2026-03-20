@@ -4,10 +4,12 @@
 --  key: waiting:{showId}, member: userId, score: currentTime
 
 -- 입력 매개변수 파싱
-local userId = tonumber(ARGV[1])
+local userId = ARGV[1]
 local capacity = tonumber(ARGV[2])
 local currentTime = tonumber(ARGV[3])
 local expireTime = tonumber(ARGV[4])
+
+local activeCount = redis.call("ZCARD", KEYS[1])
 
 if activeCount < capacity then
     -- active queue 등록
