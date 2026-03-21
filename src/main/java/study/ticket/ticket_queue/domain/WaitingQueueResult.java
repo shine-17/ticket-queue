@@ -7,5 +7,13 @@ import lombok.Getter;
 @Getter
 public class WaitingQueueResult {
     private WaitingQueueStatus status;
-    private Long position;
+    private Long waitingScore;
+
+    public boolean isActive() {
+        return status == WaitingQueueStatus.ACTIVE;
+    }
+
+    public boolean isWaiting() {
+        return status == WaitingQueueStatus.WAITING;
+    }
 }
