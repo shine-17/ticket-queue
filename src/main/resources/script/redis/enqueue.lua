@@ -16,8 +16,9 @@ if activeCount < capacity then
     redis.call("ZADD", KEYS[1], expireTime, userId)
     return {"ACTIVE"}
 else
+    local seq = redis.call("INCR", "queue:seq")
     -- waiting queue 등록
-    redis.call("ZADD", KEYS[2], currentTime, userId)
+    redis.call("ZADD", KEYS[2], seq, userId)
 
     -- 대기 순서
     local position = redis.call("ZRANK", KEYS[2], userId)

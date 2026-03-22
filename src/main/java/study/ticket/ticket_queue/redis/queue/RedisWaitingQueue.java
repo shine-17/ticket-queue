@@ -9,8 +9,10 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 import study.ticket.ticket_queue.domain.WaitingQueueResult;
 import study.ticket.ticket_queue.domain.WaitingQueueStatus;
+import study.ticket.ticket_queue.domain.WaitingQueueStatusInfo;
 import study.ticket.ticket_queue.port.WaitingQueuePort;
 import study.ticket.ticket_queue.redis.util.RedisKeys;
+import study.ticket.ticket_queue.util.JsonHelper;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -68,9 +70,6 @@ public class RedisWaitingQueue implements WaitingQueuePort {
                 script,
                 keys,
                 userId,
-//                String.valueOf(CAPACITY),
-//                String.valueOf(currentTime),
-//                String.valueOf(expireTime)
                 CAPACITY,
                 currentTime,
                 expireTime
