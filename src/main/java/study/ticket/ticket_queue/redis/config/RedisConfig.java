@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -19,8 +20,14 @@ public class RedisConfig {
         template.setHashKeySerializer(new StringRedisSerializer());
 
         // Value: Plain string (따옴표 없이 저장)
-        template.setValueSerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new StringRedisSerializer());
+        GenericToStringSerializer<Object> serializer = new GenericToStringSerializer<>(Object.class);
+        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+
+        template.setValueSerializer(serializer);
+        template.setHashValueSerializer(serializer);
+
+        // execute() 시 전달하는 args(인자)들에 적용되는 직렬화 도구
+//        template.setStringSerializer(stringRedisSerializer);
 
         return template;
     }
