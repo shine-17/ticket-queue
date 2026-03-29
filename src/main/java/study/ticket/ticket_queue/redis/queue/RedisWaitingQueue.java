@@ -30,26 +30,6 @@ public class RedisWaitingQueue implements WaitingQueuePort {
     @Value("${active.user.ttl}")
     private int ACTIVE_USER_TTL;
 
-
-
-    @Override
-    public boolean isActive(String userId, long showId) {
-        String key = RedisKeys.ACTIVE_USER.generateKey(showId);
-//        Long result = redisTemplate.opsForZSet().rank(key, userId);
-        Double result = redisTemplate.opsForZSet().score(key, userId);
-
-        return result != null;
-    }
-
-    @Override
-    public boolean isWaiting(String userId, long showId) {
-        String key = RedisKeys.WAITING_USER.generateKey(showId);
-//        Long result = redisTemplate.opsForZSet().rank(key, userId);
-        Double result = redisTemplate.opsForZSet().score(key, userId);
-
-        return result != null;
-    }
-
     @Override
     public WaitingQueueResult enqueue(String userId, long showId) {
 
@@ -62,7 +42,7 @@ public class RedisWaitingQueue implements WaitingQueuePort {
         List<String> keys = getKeys(userId, showId);
 
         LocalDateTime now = LocalDateTime.now();
-        long currentTime = Timestamp.valueOf(now).getTime();
+        long currentTime = Timestamp.valueOf(now).getTime() * 1000;
         long expireTime = Timestamp.valueOf(now.plusMinutes(ACTIVE_USER_TTL)).getTime();
 
         // ARGV: userId, seatCount, ttl
