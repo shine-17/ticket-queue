@@ -35,6 +35,7 @@ public class RedisWaitingQueue implements WaitingQueuePort {
 
         // waiting queue score에 sequence 넣기
 
+
         // Lua Script
         RedisScript<List> script = getLuaScript("script/redis/enqueue.lua", List.class);
 

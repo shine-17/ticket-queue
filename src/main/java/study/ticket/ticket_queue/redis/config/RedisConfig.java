@@ -31,21 +31,4 @@ public class RedisConfig {
 
         return template;
     }
-
-//    @Bean
-//    public RedisTemplate<String, RedisBookingDto> bookingRedisTemplate(RedisConnectionFactory factory) {
-//        RedisTemplate<String, RedisBookingDto> template = new RedisTemplate<>();
-//        template.setConnectionFactory(factory);
-//
-//        // Key: String
-//        template.setKeySerializer(new StringRedisSerializer());
-//        template.setHashKeySerializer(new StringRedisSerializer());
-//
-//        // Value: Json
-//        Jackson2JsonRedisSerializer<RedisBookingDto> serializer = new Jackson2JsonRedisSerializer<>(RedisBookingDto.class);
-//        template.setValueSerializer(serializer);
-//        template.setHashValueSerializer(serializer);
-//
-//        return template;
-//    }
 }
