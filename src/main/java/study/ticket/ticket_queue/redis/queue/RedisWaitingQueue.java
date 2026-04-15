@@ -86,7 +86,7 @@ public class RedisWaitingQueue implements WaitingQueuePort {
         List<String> keys = getKeys(userId, showId);
 
         LocalDateTime now = LocalDateTime.now();
-        long currentTime = Timestamp.valueOf(now).getTime();
+        long currentTime = Timestamp.valueOf(now).getTime() * 1000;
         long expireTime = Timestamp.valueOf(now.plusMinutes(ACTIVE_USER_TTL)).getTime();
 
         // ARGV: userId, seatCount, ttl
