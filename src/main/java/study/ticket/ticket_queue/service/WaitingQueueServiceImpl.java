@@ -1,6 +1,7 @@
 package study.ticket.ticket_queue.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import study.ticket.ticket_queue.domain.WaitingQueueResult;
 import study.ticket.ticket_queue.domain.WaitingQueueStatusInfo;
@@ -11,6 +12,7 @@ import study.ticket.ticket_queue.token.JwtProvider;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WaitingQueueServiceImpl implements WaitingQueueService {
 
     private final WaitingQueuePort waitingQueuePort;
@@ -31,6 +33,8 @@ public class WaitingQueueServiceImpl implements WaitingQueueService {
 
         // token 생성
         String token = jwtProvider.generateToken(payload);
+
+        log.info("Token generated: {}", token);
 
         return WaitingQueueStatusInfo.builder()
                 .waitingScore(enqueueResult.getWaitingScore())
