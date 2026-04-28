@@ -57,7 +57,7 @@ public class SecurityConfig {
 
                 // 엔드포인트 별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/", "/signup").permitAll()
+                        .requestMatchers("/login", "/", "/signup", "/api").permitAll()
                         .requestMatchers("/admin").hasAuthority("ADMIN")
                         .anyRequest().authenticated())
 
